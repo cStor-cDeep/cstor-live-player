@@ -44,6 +44,18 @@ function toggleFullscreen(elem) {
     }
 }
 
+const DEFAULT_ERROR_TIMEOUT = 10000
+const DEFAULT_RECONNECT_TIMEOUT = 4000
+
+const STATE_INITIALIZING = 0
+const STATE_IDLE         = 1
+const STATE_LOADING      = 2
+const STATE_PLAYING      = 3
+// const STATE_ERROR        = 4
+const STATE_RECONNECTING = 5
+// const STATE_DESTROYED    = 6
+
+
 export default {
     props: {
         src: String,
@@ -52,7 +64,10 @@ export default {
     },
     data() {
         return {
-            playingSrc: this.src || ""
+            // errorTimer: null, // errorTimer won't be in data as I don't want it to be reactive.
+            // reconnectTimer: null, // reconnectTimer won't be in data as I don't want it to be reactive.
+            playingSrc: this.src || "",
+            state: STATE_INITIALIZING,
         };
     },
     created() {
@@ -65,6 +80,8 @@ export default {
             this.src.length > 0
         ) {
             this.play(this.src);
+        } else {
+            this.state = STATE_IDLE
         }
     },
     methods: {
@@ -77,11 +94,66 @@ export default {
             this.player
                 .play()
                 .then(() => {
-                    console.log("It began playin", this.playingSrc);
+                    this.state = STATE_PLAYING
+                    console.log("It began playin", this.playingSrc)
+                    this.cancelErrorTimer()
                 })
                 .catch(ex => {
-                    console.log("It failed", ex);
+                    // this.state = STATE_ERROR
+                    console.log("It failed", ex)
+                    this.cancelErrorTimer()
+                    this.startReconnectTimer()
                 });
+        },
+        startErrorTimer( ms = DEFAULT_ERROR_TIMEOUT ) {
+            this.cancelErrorTimer();
+            console.log("Starting error timer", ms);
+            this.errorTimer = window.setTimeout(this.onErrorTimer, ms);
+        },
+        cancelErrorTimer() {
+            if ( this.errorTimer !== null ) {
+                console.log("Stopping error Timer");
+                window.clearTimeout(this.errorTimer);
+                this.errorTimer = null;
+            }
+        },
+        onErrorTimer() {
+            // console.log("On error timer", this.state)
+            this.errorTimer = null;
+            if ( this.state === STATE_LOADING ) {
+                // this.displayMessage = "视频流超时！";
+                // if ( this.connected === true ) {
+                //     this.state = STATE_ERROR;
+                // } else {
+                    this._closePlayer();
+                    this.startReconnectTimer();
+                // }
+            }
+        },
+        startReconnectTimer( ms = DEFAULT_RECONNECT_TIMEOUT ) {
+            this.cancelReconnectTimer()
+            console.log("Starting reconnect timer", ms)
+            this.state = STATE_RECONNECTING
+            // this.displayMessage = "连接失败..."
+            this.reconnectTimer = window.setTimeout(this.onReconnectTimer, ms)
+        },
+        cancelReconnectTimer() {
+            if ( this.reconnectTimer !== null ) {
+                console.log("Stopping reconnect Timer");
+                window.clearTimeout(this.reconnectTimer);
+                this.reconnectTimer = null;
+            }
+        },
+        onReconnectTimer() {
+            // console.log("On reconnect timer", this.state)
+            this.reconnectTimer = null;
+            if ( this.state === STATE_RECONNECTING ) {
+                this.state = STATE_IDLE;
+            
+                if ( this.playingSrc.length > 0 ) {
+                    this.play(this.playingSrc);
+                }
+            }
         },
         _closePlayer() {
             if (this.player != null) {
@@ -90,12 +162,15 @@ export default {
                 this.player.destroy();
                 this.player = null;
             }
+
+            this.cancelReconnectTimer();
         },
         play(url) {
             this._closePlayer();
 
             if (url === undefined || url === null || url.length === 0) {
                 this.playingSrc = "";
+                this.state = STATE_IDLE;
                 return;
             }
 
@@ -126,12 +201,14 @@ export default {
                 error_object
             ) {
                 console.log("ERROR", event_type, error_type, error_object);
+                this.startReconnectTimer();
             });
 
             // this happens when video stops, for example stopping the ai task
             // maybe this event appears because of nginx configuration about notify_xx ??
-            this.player.on(flvjs.Events.LOADING_COMPLETE, function() {
-                console.log("LOADING_COMPLETE", arguments);
+            this.player.on(flvjs.Events.LOADING_COMPLETE, (evt) => {
+                console.log("LOADING_COMPLETE", evt);
+                this.startReconnectTimer();
             });
 
             // none of these 4 events seems to happen, I think we should get the
@@ -153,7 +230,7 @@ export default {
 
             /* Statistics:
                 currentSegmentIndex: 0
-                decodedFrames: 60
+                decodedFrames: 60 // could use this, if decodeFrames stays the same don't reset the timer
                 droppedFrames: 0
                 hasRedirect: false
                 loaderType: "fetch-stream-loader"
@@ -163,11 +240,13 @@ export default {
                 url: "http://192.168.2.187:28081/video/live/cam_1_4"
             */
             // can use this event to detect video didn't start or no more frames
-            // this.player.on(flvjs.Events.STATISTICS_INFO, function() {console.log("STATISTICS_INFO", arguments);});
+            // this.player.on(flvjs.Events.STATISTICS_INFO, function(stats) {console.log("STATISTICS_INFO", stats);});
 
             // console.log(this.player);
 
             this.player.load();
+            this.startErrorTimer();
+            this.state = STATE_LOADING;
 
             // play() was moved to onLoadedMetadata event on the video tag
             // this.player.play()
