@@ -95,8 +95,9 @@ export default {
                 .play()
                 .then(() => {
                     this.state = STATE_PLAYING
-                    console.log("It began playin", this.playingSrc)
+                    console.log("It began playin in THEN", this.playingSrc)
                     this.cancelErrorTimer()
+                    this.cancelReconnectTimer()
                 })
                 .catch(ex => {
                     // this.state = STATE_ERROR
@@ -164,6 +165,7 @@ export default {
             }
 
             this.cancelReconnectTimer();
+            this.cancelErrorTimer();
         },
         play(url) {
             this._closePlayer();
@@ -195,11 +197,7 @@ export default {
             this.player.attachMediaElement(this.$refs.videoel);
 
             // "NetworkError", "HttpStatusCodeInvalid", {code: 500, msg:"Internal Server Error"}
-            this.player.on(flvjs.Events.ERROR, function(
-                event_type,
-                error_type,
-                error_object
-            ) {
+            this.player.on(flvjs.Events.ERROR, (event_type,error_type,error_object) => {
                 console.log("ERROR", event_type, error_type, error_object);
                 this.startReconnectTimer();
             });
@@ -241,6 +239,7 @@ export default {
             */
             // can use this event to detect video didn't start or no more frames
             // this.player.on(flvjs.Events.STATISTICS_INFO, function(stats) {console.log("STATISTICS_INFO", stats);});
+            this.player.on(flvjs.Events.STATISTICS_INFO, this._onStatisticsInfo);
 
             // console.log(this.player);
 
@@ -267,6 +266,23 @@ export default {
         },
         onBeforeLeave() {
             this._closePlayer();
+        },
+        _onStatisticsInfo(stats) {
+            if ( this.state === STATE_LOADING ) {
+                if ( stats.decodedFrames > 0 ) {
+                    this.state = STATE_PLAYING
+                    console.log("It began playin in STATISTICS", this.playingSrc)
+                    this.cancelErrorTimer()
+                    this.cancelReconnectTimer()
+                    console.log("Removing stats event because we are playing");
+                    this.player.off(flvjs.Events.STATISTICS_INFO, this._onStatisticsInfo);
+                    // console.log("Status:", this.state, "Stats:", stats);
+                }
+                
+            } else { // here later might implement other states checks, remove the stats off line
+                console.log("Removing stats event (within the event itself) because we are not loading anymore");
+                this.player.off(flvjs.Events.STATISTICS_INFO, this._onStatisticsInfo);
+            }
         }
     },
     watch: {
