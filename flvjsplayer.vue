@@ -44,6 +44,10 @@ function toggleFullscreen(elem) {
     }
 }
 
+const MAX_PLAY_DIFF = 0.5
+const MAX_PLAY_COUNTER = 30
+// const DEFAULT_REOPEN_AFTER_TIMEOUT = 30000
+
 const DEFAULT_ERROR_TIMEOUT = 10000
 const DEFAULT_RECONNECT_TIMEOUT = 4000
 
@@ -68,6 +72,7 @@ export default {
             // reconnectTimer: null, // reconnectTimer won't be in data as I don't want it to be reactive.
             playingSrc: this.src || "",
             state: STATE_INITIALIZING,
+            overplayCounter: 0
         };
     },
     created() {
@@ -191,7 +196,13 @@ export default {
                 // stashInitialSize: 0,
                 lazyLoad: false,
                 lazyLoadMaxDuration: 0,
-                deferLoadAfterSourceOpen: false
+                deferLoadAfterSourceOpen: false,
+
+
+                statisticsInfoReportInterval: 1000,
+                autoCleanupSourceBuffer: true,
+                autoCleanupMaxBackwardDuration: 3,
+                autoCleanupMinBackwardDuration: 2
             });
 
             this.player.attachMediaElement(this.$refs.videoel);
@@ -274,14 +285,41 @@ export default {
                     console.log("It began playin in STATISTICS", this.playingSrc)
                     this.cancelErrorTimer()
                     this.cancelReconnectTimer()
-                    console.log("Removing stats event because we are playing");
-                    this.player.off(flvjs.Events.STATISTICS_INFO, this._onStatisticsInfo);
+                    // console.log("Removing stats event because we are playing");
+                    // this.player.off(flvjs.Events.STATISTICS_INFO, this._onStatisticsInfo);
                     // console.log("Status:", this.state, "Stats:", stats);
                 }
                 
             } else { // here later might implement other states checks, remove the stats off line
-                console.log("Removing stats event (within the event itself) because we are not loading anymore");
-                this.player.off(flvjs.Events.STATISTICS_INFO, this._onStatisticsInfo);
+                if ( this.player.buffered.length > 0 ) {
+                    const buffered = this.player.buffered
+                    const buffered_end = buffered.end(0)
+                    const current_time = this.player.currentTime
+                    const total_buffered = buffered_end - buffered.start(0)
+                    const play_diff = buffered_end - current_time
+
+                    // console.log(total_buffered.toFixed(3), current_time.toFixed(3), buffered_end.toFixed(3), play_diff.toFixed(3) )
+
+                    if ( play_diff > MAX_PLAY_DIFF ) {
+                        if ( ++this.overplayCounter >= MAX_PLAY_COUNTER ) {
+                            this.overplayCounter = 0
+                            // `current_time + 0.4` is bad, sometimes time will be farther than that and will never get there
+                            // `buffered_end` is also bad because it might never get a buffer to play
+                            if (  total_buffered > 0.1 ) {
+                                const new_time = buffered_end - 0.1
+                                console.log("Adjusting time due to drift to", new_time.toFixed(3))
+                                this.$nextTick(() => this.player.currentTime = new_time)
+                            } else {
+                                console.log("COULDN'T ADJUST TIME BECAUSE BUFFER DIDN'T HAVE ENOUGHT")
+                            }
+                        }
+                    } else {
+                        this.overplayCounter = 0;
+                    }
+                }
+
+                // console.log("Removing stats event (within the event itself) because we are not loading anymore");
+                // this.player.off(flvjs.Events.STATISTICS_INFO, this._onStatisticsInfo);
             }
         }
     },
