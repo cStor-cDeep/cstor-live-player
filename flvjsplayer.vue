@@ -59,7 +59,6 @@ const STATE_PLAYING      = 3
 const STATE_RECONNECTING = 5
 // const STATE_DESTROYED    = 6
 
-
 export default {
     props: {
         src: String,
@@ -89,6 +88,9 @@ export default {
             this.state = STATE_IDLE
         }
     },
+    beforeDestroy() {
+        this.stop()
+    },
     methods: {
         onVideoDoubleClick() {
             console.log("Will try to toggle full screen");
@@ -98,15 +100,13 @@ export default {
             // console.log("on metadata loaded")
             this.player
                 .play()
-                .then(() => {
-                    this.state = STATE_PLAYING
-                    console.log("It began playin in THEN", this.playingSrc)
-                    this.cancelErrorTimer()
-                    this.cancelReconnectTimer()
-                })
+                // WARNING: due to mediaserver gop_cache we need to detect the
+                // begin_playing event on the statistics, so we can jump to
+                // current time.
+                // Here we will just check for other errors.
                 .catch(ex => {
                     // this.state = STATE_ERROR
-                    console.log("It failed", ex)
+                    console.log("Playing failed:", ex)
                     this.cancelErrorTimer()
                     this.startReconnectTimer()
                 });
@@ -162,6 +162,8 @@ export default {
             }
         },
         _closePlayer() {
+            this.state = STATE_IDLE
+            
             if (this.player != null) {
                 this.player.unload();
                 this.player.detachMediaElement();
@@ -252,20 +254,9 @@ export default {
             // this.player.on(flvjs.Events.STATISTICS_INFO, function(stats) {console.log("STATISTICS_INFO", stats);});
             this.player.on(flvjs.Events.STATISTICS_INFO, this._onStatisticsInfo);
 
-            // console.log(this.player);
-
             this.player.load();
             this.startErrorTimer();
             this.state = STATE_LOADING;
-
-            // play() was moved to onLoadedMetadata event on the video tag
-            // this.player.play()
-            //     .then( function() {
-            //             console.log("It began playin", url);
-            //     })
-            //     .catch( function(ex) {
-            //             console.log("It failed", ex);
-            //     });
 
             this.playingSrc = url;
         },
@@ -285,9 +276,25 @@ export default {
                     console.log("It began playin in STATISTICS", this.playingSrc)
                     this.cancelErrorTimer()
                     this.cancelReconnectTimer()
-                    // console.log("Removing stats event because we are playing");
-                    // this.player.off(flvjs.Events.STATISTICS_INFO, this._onStatisticsInfo);
-                    // console.log("Status:", this.state, "Stats:", stats);
+
+                    if ( this.player.buffered.length > 0 ) {
+                        const buffered = this.player.buffered
+                        const buffered_end = buffered.end(0)
+                        const current_time = this.player.currentTime
+                        const total_buffered = buffered_end - buffered.start(0)
+                        const play_diff = buffered_end - current_time
+
+                        if ( play_diff > MAX_PLAY_DIFF ) {
+                            if (  total_buffered > 0.1 ) {
+                                const new_time = buffered_end - 0.1
+                                console.log("Adjusting --- INITIAL --- time to", new_time.toFixed(3))
+                                this.$nextTick(() => this.player.currentTime = new_time)
+                            } else {
+                                console.log("COULDN'T ADJUST --- INITIAL --- TIME BECAUSE BUFFER DIDN'T HAVE ENOUGHT")
+                            }
+                        }
+                    }
+
                 }
                 
             } else { // here later might implement other states checks, remove the stats off line
