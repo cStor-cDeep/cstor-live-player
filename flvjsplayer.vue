@@ -9,10 +9,15 @@
             @loadedmetadata="onLoadedMetadata"
             muted
         ></video>
+        <div class="cvideoplayer-panel" v-bind:class="panelClass">
+            <font-awesome-icon v-if="state === 0" icon="spinner" pulse class="initializing-icon"/>
+            <div v-if="showingMessage" class="centered-message">{{displayMessage}}</div>
+        </div>
     </div>
 </template>
 <script>
 import flvjs from "flv.js";
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
 function toggleFullscreen(elem) {
     elem = elem || document.documentElement;
@@ -55,11 +60,12 @@ const STATE_INITIALIZING = 0
 const STATE_IDLE         = 1
 const STATE_LOADING      = 2
 const STATE_PLAYING      = 3
-// const STATE_ERROR        = 4
+const STATE_ERROR        = 4
 const STATE_RECONNECTING = 5
 // const STATE_DESTROYED    = 6
 
 export default {
+    components: { FontAwesomeIcon },
     props: {
         src: String,
         aspectratio: { type: String, default: "" },
@@ -71,8 +77,21 @@ export default {
             // reconnectTimer: null, // reconnectTimer won't be in data as I don't want it to be reactive.
             playingSrc: this.src || "",
             state: STATE_INITIALIZING,
+            displayMessage: "",
             overplayCounter: 0
         };
+    },
+    computed: {
+        showingMessage() {
+            return this.state === STATE_ERROR || this.state === STATE_RECONNECTING;
+        },
+        panelClass() {
+            return {
+                idle:    this.state === STATE_IDLE,
+                loading: this.state === STATE_LOADING,
+                error:   this.state === STATE_ERROR || this.state === STATE_RECONNECTING
+            };
+        }
     },
     created() {
         this.player = null;
@@ -107,6 +126,7 @@ export default {
                 .catch(ex => {
                     // this.state = STATE_ERROR
                     console.log("Playing failed:", ex)
+                    this.displayMessage = "播放错误！";
                     this.cancelErrorTimer()
                     this.startReconnectTimer()
                 });
@@ -127,7 +147,7 @@ export default {
             // console.log("On error timer", this.state)
             this.errorTimer = null;
             if ( this.state === STATE_LOADING ) {
-                // this.displayMessage = "视频流超时！";
+                    this.displayMessage = "播放视频超时！";
                 // if ( this.connected === true ) {
                 //     this.state = STATE_ERROR;
                 // } else {
@@ -351,6 +371,47 @@ export default {
     color: white;
     box-sizing: border-box;
     /*border: 5px solid red;*/
+}
+
+.cvideoplayer-panel.idle {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    color: white;
+
+    background-color: #1b1c20;
+    background-image: url(~@/cvideoplayer/images/stopped-bg.png);
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.cvideoplayer-panel.loading {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    color: white;
+        
+    background: black url(~@/cvideoplayer/images/loading.gif) no-repeat center;
+}
+
+.cvideoplayer-panel.error {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    color: white;
+    display: table;
+    
+    box-sizing: border-box;
+    border: 5px solid yellow;
+}
+
+.cvideoplayer-panel.error > .centered-message {
+    display: table-cell;
+    vertical-align: middle;
+    text-align: center;
 }
 
 .videoel {

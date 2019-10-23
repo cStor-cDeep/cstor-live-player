@@ -16,7 +16,6 @@
 <script>
 import Config from '@/Config'
 import VideoPlayer from './flvjsplayer.vue'
-// import VideoPlayer from './singleplayer.vue'
 // import VideoPlayer from './videojsplayer.vue'
 
 export default {
