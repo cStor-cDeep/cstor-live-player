@@ -286,6 +286,9 @@ export default {
                 this._closePlayer();
             }
         },
+        getVideoElement() {
+            return this.$refs.videoel;
+        },
         onBeforeLeave() {
             this._closePlayer();
         },
