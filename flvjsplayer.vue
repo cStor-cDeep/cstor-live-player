@@ -49,7 +49,7 @@ function toggleFullscreen(elem) {
     }
 }
 
-const MAX_PLAY_DIFF = 0.5
+const MAX_PLAY_DIFF = 1
 const MAX_PLAY_COUNTER = 30
 // const DEFAULT_REOPEN_AFTER_TIMEOUT = 30000
 
@@ -212,7 +212,8 @@ export default {
 
             this.player = flvjs.createPlayer(mediaDataSource, {
                 enableWorker: false,
-                enableStashBuffer: false,
+                enableStashBuffer: true,
+                stashInitialSize: 64 * 1024, // 224
                 // stashInitialSize: 1024*1024*3,
                 // enableStashBuffer: false,
                 // stashInitialSize: 0,
@@ -275,6 +276,8 @@ export default {
             this.player.on(flvjs.Events.STATISTICS_INFO, this._onStatisticsInfo);
 
             this.player.load();
+
+            // this.$refs.videoel.playbackRate = 1.02
             this.startErrorTimer();
             this.state = STATE_LOADING;
 
@@ -300,23 +303,23 @@ export default {
                     this.cancelErrorTimer()
                     this.cancelReconnectTimer()
 
-                    if ( this.player.buffered.length > 0 ) {
-                        const buffered = this.player.buffered
-                        const buffered_end = buffered.end(0)
-                        const current_time = this.player.currentTime
-                        const total_buffered = buffered_end - buffered.start(0)
-                        const play_diff = buffered_end - current_time
+                    // if ( this.player.buffered.length > 0 ) {
+                    //     const buffered = this.player.buffered
+                    //     const buffered_end = buffered.end(0)
+                    //     const current_time = this.player.currentTime
+                    //     const total_buffered = buffered_end - buffered.start(0)
+                    //     const play_diff = buffered_end - current_time
 
-                        if ( play_diff > MAX_PLAY_DIFF ) {
-                            if (  total_buffered > 0.1 ) {
-                                const new_time = buffered_end - 0.1
-                                console.log("Adjusting --- INITIAL --- time to", new_time.toFixed(3))
-                                this.$nextTick(() => this.player.currentTime = new_time)
-                            } else {
-                                console.log("COULDN'T ADJUST --- INITIAL --- TIME BECAUSE BUFFER DIDN'T HAVE ENOUGHT")
-                            }
-                        }
-                    }
+                    //     if ( play_diff > MAX_PLAY_DIFF ) {
+                    //         if (  total_buffered > 0.1 ) {
+                    //             const new_time = buffered_end - 0.1
+                    //             console.log("Adjusting --- INITIAL --- time to", new_time.toFixed(3))
+                    //             this.$nextTick(() => this.player.currentTime = new_time)
+                    //         } else {
+                    //             console.log("COULDN'T ADJUST --- INITIAL --- TIME BECAUSE BUFFER DIDN'T HAVE ENOUGHT")
+                    //         }
+                    //     }
+                    // }
 
                 }
                 
@@ -335,9 +338,9 @@ export default {
                             this.overplayCounter = 0
                             // `current_time + 0.4` is bad, sometimes time will be farther than that and will never get there
                             // `buffered_end` is also bad because it might never get a buffer to play
-                            if (  total_buffered > 0.1 ) {
-                                const new_time = buffered_end - 0.1
-                                console.log("Adjusting time due to drift to", new_time.toFixed(3))
+                            if ( total_buffered > 0.5 ) {
+                                const new_time = buffered_end - 0.5
+                                console.log(`Adjusting time due to drift of ${this.playingSrc} from ${current_time} to`, new_time.toFixed(3))
                                 this.$nextTick(() => this.player.currentTime = new_time)
                             } else {
                                 console.log("COULDN'T ADJUST TIME BECAUSE BUFFER DIDN'T HAVE ENOUGHT")
