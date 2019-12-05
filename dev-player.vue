@@ -8,16 +8,16 @@
                 Stop
             </button>
             <input id="vidurl" type="text" v-model="videosrc"/>
-            <button type="button" @click="doCap()">
+            <button type="button" @click="doCap">
                 Capture
             </button>
-            <button type="button" @click="doCanvasCap()">
+            <button type="button" @click="doCanvasCap">
                 CanvasCap
             </button>
         </div>
         <video-player ref=player />
-        <div id="captured-frame" v-visible="viewingCapturedImage">
-            <img ref="capturedImage" style="width: 100%"/>
+        <div id="captured-frame" v-if="viewingCapturedImage === true">
+            <img ref="capturedImage" :src="capturedImage"  style="width: 100%"/>
             <button type="button" @click="viewingCapturedImage = false" style="position: absolute; right:0">X</button>
         </div>
     </div>    
@@ -34,6 +34,7 @@ export default {
     data() {
         return { 
             viewingCapturedImage: false,
+            capturedImage: null,
             videosrc: `${Config.wsflv}/live/cam_3_4`
             // videosrc: "http://192.168.2.163:9111/live?port=1554&app=flvtest&stream=copy_3"
             // videosrc: "http://192.168.2.187:10080/video/171/cam_9_0"
@@ -42,37 +43,14 @@ export default {
     },
     methods: {
         doCap() {
-            const vel = this.$refs.player.getVideoElement()
-
-            const vwidth = vel.videoWidth
-            const vheight = vel.videoHeight
-
-            if ( vwidth > 0 && vheight > 0 ) {
-                const canvas = document.createElement('canvas');
-                canvas.width = vwidth
-                canvas.height = vheight
-
-                const ctx = canvas.getContext('2d')
-                ctx.drawImage(vel, 0, 0)
-                
-                this.$refs.capturedImage.src = canvas.toDataURL('image/png')
+            const canvas = this.$refs.player.captureImage()
+            if ( canvas !== null ) {
+                this.capturedImage = canvas.toDataURL('image/png')
                 this.viewingCapturedImage = true;
-
             } else {
                 console.log("Not capturing...")
             }
-        },
-        doCanvasCap() {
-            const vel = this.$refs.player.getVideoElement()
-            const vwidth = vel.videoWidth
-            const vheight = vel.videoHeight
-            if ( vwidth > 0 && vheight > 0 ) {
-                console.log(`Video is ${vwidth}x${vheight}`)
-            } else {
-                console.log("Video might not be playing")
-            }
-       }
-
+        }
     }
 }
 </script>
@@ -80,7 +58,7 @@ export default {
 
 #dev-player {
     position: absolute;
-    top: 0;
+    top: 70px;
     width: 100%;
     height: 100%;
     overflow: hidden;
