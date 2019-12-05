@@ -53,8 +53,8 @@ const MAX_PLAY_DIFF = 1
 const MAX_PLAY_COUNTER = 30
 // const DEFAULT_REOPEN_AFTER_TIMEOUT = 30000
 
-const DEFAULT_ERROR_TIMEOUT = 10000
-const DEFAULT_RECONNECT_TIMEOUT = 4000
+const DEFAULT_ERROR_TIMEOUT = 20000
+const DEFAULT_RECONNECT_TIMEOUT = 5000
 
 const STATE_INITIALIZING = 0
 const STATE_IDLE         = 1
@@ -291,6 +291,22 @@ export default {
         },
         getVideoElement() {
             return this.$refs.videoel;
+        },
+        /**
+         * Captures an image and returns it as 'canvas'
+         */
+        captureImage() {
+            const vel = this.getVideoElement()
+            if ( vel.videoHeight > 0 && vel.videoWidth > 0 ) {
+                const canvas = document.createElement("canvas")
+                canvas.width = vel.videoWidth
+                canvas.height = vel.videoHeight
+                canvas.getContext('2d').drawImage(vel, 0, 0)
+
+                return canvas
+            }
+
+            return null
         },
         onBeforeLeave() {
             this._closePlayer();
