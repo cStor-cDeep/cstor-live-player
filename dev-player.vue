@@ -134,7 +134,7 @@ export default {
     border: 1px solid rgb(31, 160, 255);
     /* background-color: rgba(231,24,55,0.5); */
     /* background-color: rgba(9, 41, 66, 0.3) */
-    background-color: rgba(31, 160, 255, 0.3)
+    background-color: rgba(31, 160, 255, 0.3);
 }
 
 #personrects .personrects-box:hover {
