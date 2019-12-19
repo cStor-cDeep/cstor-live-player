@@ -1,20 +1,3 @@
-<template>
-    <div class="cvideoplayer-single">
-        <video
-            class="videoel"
-            :class="{fill: aspectratio === 'fill'}"
-            ref="videoel"
-            oncontextmenu="return false;"
-            @dblclick.stop="onVideoDoubleClick"
-            @loadedmetadata="onLoadedMetadata"
-            muted
-        ></video>
-        <div class="cvideoplayer-panel" v-bind:class="panelClass">
-            <font-awesome-icon v-if="state === 0" icon="spinner" pulse class="initializing-icon"/>
-            <div v-if="showingMessage" class="centered-message">{{displayMessage}}</div>
-        </div>
-    </div>
-</template>
 <script>
 import flvjs from "flv.js";
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
@@ -383,8 +366,33 @@ export default {
     }
 };
 </script>
+<template>
+    <div class="cvideoplayer-container">
+        <div class="cvideoplayer-single">
+            <video
+                class="videoel"
+                :class="{fill: aspectratio === 'fill'}"
+                ref="videoel"
+                oncontextmenu="return false;"
+                @dblclick.stop="onVideoDoubleClick"
+                @loadedmetadata="onLoadedMetadata"
+                muted
+            ></video>
+            <div class="cvideoplayer-panel" v-bind:class="panelClass">
+                <font-awesome-icon v-if="state === 0" icon="spinner" pulse class="initializing-icon"/>
+                <div v-if="showingMessage" class="centered-message">{{displayMessage}}</div>
+            </div>
+        </div>
+    </div>
+</template>
 <style scoped>
+.cvideoplayer-container {
+    position: relative;
+    height: 100%;
+}
+
 .cvideoplayer-single {
+    border-radius: inherit;
     position: absolute;
     display: flex;
     width: 100%;
@@ -395,13 +403,19 @@ export default {
     /*border: 5px solid red;*/
 }
 
-.cvideoplayer-panel.idle {
-    height: 100%;
+.cvideoplayer-panel {
+    border-radius: inherit;
+    box-sizing: border-box;
     width: 100%;
+    height: 100%;
     position: absolute;
     top: 0;
     color: white;
+    display: none;
+}
 
+.cvideoplayer-panel.idle {
+    display: block;
     background-color: #1b1c20;
     background-image: url(~@/cvideoplayer/images/stopped-bg.png);
     background-position: center;
@@ -409,24 +423,12 @@ export default {
 }
 
 .cvideoplayer-panel.loading {
-    height: 100%;
-    width: 100%;
-    position: absolute;
-    top: 0;
-    color: white;
-        
+    display: block;
     background: black url(~@/cvideoplayer/images/loading.gif) no-repeat center;
 }
 
 .cvideoplayer-panel.error {
-    height: 100%;
-    width: 100%;
-    position: absolute;
-    top: 0;
-    color: white;
     display: table;
-    
-    box-sizing: border-box;
     border: 5px solid yellow;
 }
 
@@ -437,6 +439,7 @@ export default {
 }
 
 .videoel {
+    border-radius: inherit;
     min-width: 100%;
     min-height: 100%;
 }
