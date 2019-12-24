@@ -1,6 +1,5 @@
 <script>
 import flvjs from "flv.js";
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
 function toggleFullscreen(elem) {
     elem = elem || document.documentElement;
@@ -48,7 +47,6 @@ const STATE_RECONNECTING = 5
 // const STATE_DESTROYED    = 6
 
 export default {
-    components: { FontAwesomeIcon },
     props: {
         src: String,
         aspectratio: { type: String, default: "" },
@@ -379,7 +377,7 @@ export default {
                 muted
             ></video>
             <div class="cvideoplayer-panel" v-bind:class="panelClass">
-                <font-awesome-icon v-if="state === 0" icon="spinner" pulse class="initializing-icon"/>
+                <i v-if="state === 0" class="el-icon-loading"></i>
                 <div v-if="showingMessage" class="centered-message">{{displayMessage}}</div>
             </div>
         </div>
