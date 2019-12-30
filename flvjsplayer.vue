@@ -31,9 +31,12 @@ function toggleFullscreen(elem) {
     }
 }
 
-const MAX_PLAY_DIFF = 1
-const MAX_PLAY_COUNTER = 30
-// const DEFAULT_REOPEN_AFTER_TIMEOUT = 30000
+const MAX_PLAY_DIFF = 1.0
+const MIN_PLAY_DIFF = 0.6
+const MAX_PLAY_COUNTER = 5
+const PLAY_SPEED_NORMAL = 1.00
+const PLAY_SPEED_MAX = 1.12
+const PLAY_SPEED_INC = 0.04
 
 const DEFAULT_ERROR_TIMEOUT = 20000
 const DEFAULT_RECONNECT_TIMEOUT = 5000
@@ -93,7 +96,7 @@ export default {
     },
     methods: {
         onVideoDoubleClick() {
-            console.log("Will try to toggle full screen");
+            console.log(this.playingSrc, "Will try to toggle full screen");
             toggleFullscreen(this.$refs.videoel.parentNode);
         },
         onLoadedMetadata() {
@@ -106,7 +109,7 @@ export default {
                 // Here we will just check for other errors.
                 .catch(ex => {
                     // this.state = STATE_ERROR
-                    console.log("Playing failed:", ex)
+                    console.log(this.playingSrc, "Playing failed:", ex)
                     this.displayMessage = "播放错误！";
                     this.cancelErrorTimer()
                     this.startReconnectTimer()
@@ -114,12 +117,12 @@ export default {
         },
         startErrorTimer( ms = DEFAULT_ERROR_TIMEOUT ) {
             this.cancelErrorTimer();
-            console.log("Starting error timer", ms);
+            console.log(this.playingSrc, "Starting error timer", ms);
             this.errorTimer = window.setTimeout(this.onErrorTimer, ms);
         },
         cancelErrorTimer() {
             if ( this.errorTimer !== null ) {
-                console.log("Stopping error Timer");
+                console.log(this.playingSrc, "Stopping error Timer");
                 window.clearTimeout(this.errorTimer);
                 this.errorTimer = null;
             }
@@ -139,14 +142,14 @@ export default {
         },
         startReconnectTimer( ms = DEFAULT_RECONNECT_TIMEOUT ) {
             this.cancelReconnectTimer()
-            console.log("Starting reconnect timer", ms)
+            console.log(this.playingSrc, "Starting reconnect timer", ms)
             this.state = STATE_RECONNECTING
             // this.displayMessage = "连接失败..."
             this.reconnectTimer = window.setTimeout(this.onReconnectTimer, ms)
         },
         cancelReconnectTimer() {
             if ( this.reconnectTimer !== null ) {
-                console.log("Stopping reconnect Timer");
+                console.log(this.playingSrc, "Stopping reconnect Timer");
                 window.clearTimeout(this.reconnectTimer);
                 this.reconnectTimer = null;
             }
@@ -213,30 +216,30 @@ export default {
 
             // "NetworkError", "HttpStatusCodeInvalid", {code: 500, msg:"Internal Server Error"}
             this.player.on(flvjs.Events.ERROR, (event_type,error_type,error_object) => {
-                console.log("ERROR", event_type, error_type, error_object);
+                console.log(this.playingSrc, "ERROR", event_type, error_type, error_object);
                 this.startReconnectTimer();
             });
 
             // this happens when video stops, for example stopping the ai task
             // maybe this event appears because of nginx configuration about notify_xx ??
             this.player.on(flvjs.Events.LOADING_COMPLETE, (evt) => {
-                console.log("LOADING_COMPLETE", evt);
+                console.log(this.playingSrc, "LOADING_COMPLETE", evt);
                 this.startReconnectTimer();
             });
 
             // none of these 4 events seems to happen, I think we should get the
             // events from the video tag.
             this.player.on(flvjs.Events.RECOVERED_EARLY_EOF, function() {
-                console.log("RECOVERED_EARLY_EOF", arguments);
+                console.log(this.playingSrc, "RECOVERED_EARLY_EOF", arguments);
             });
             this.player.on(flvjs.Events.MEDIA_INFO, function() {
-                console.log("MEDIA_INFO", arguments);
+                console.log(this.playingSrc, "MEDIA_INFO", arguments);
             });
             this.player.on(flvjs.Events.METADATA_ARRIVED, function() {
-                console.log("METADATA_ARRIVED", arguments);
+                console.log(this.playingSrc, "METADATA_ARRIVED", arguments);
             });
             this.player.on(flvjs.Events.SCRIPTDATA_ARRIVED, function() {
-                console.log("SCRIPTDATA_ARRIVED", arguments);
+                console.log(this.playingSrc, "SCRIPTDATA_ARRIVED", arguments);
             });
 
             // statistics works, maybe could use them to detect if there are problems with the video
@@ -255,6 +258,21 @@ export default {
             // can use this event to detect video didn't start or no more frames
             // this.player.on(flvjs.Events.STATISTICS_INFO, function(stats) {console.log("STATISTICS_INFO", stats);});
             this.player.on(flvjs.Events.STATISTICS_INFO, this._onStatisticsInfo);
+
+            // const videoel = this.$refs.videoel
+            // videoel.addEventListener('play', ev => {
+            //     console.log(this.playingSrc, "play", ev)
+            // })
+
+            // videoel.addEventListener('playing', ev => {
+            //     console.log(this.playingSrc, "playing", ev)
+            // })
+
+            // videoel.addEventListener('waiting', ev => {
+            //     console.log(this.playingSrc, "waiting", ev)
+            // })
+            
+
 
             this.player.load();
 
@@ -296,18 +314,19 @@ export default {
             if ( this.state === STATE_LOADING ) {
                 if ( stats.decodedFrames > 0 ) {
                     this.state = STATE_PLAYING
-                    console.log("It began playin in STATISTICS", this.playingSrc)
+                    console.log(this.playingSrc, "began playin in statistics")
                     this.cancelErrorTimer()
                     this.cancelReconnectTimer()
 
-                    // if ( this.player.buffered.length > 0 ) {
-                    //     const buffered = this.player.buffered
-                    //     const buffered_end = buffered.end(0)
-                    //     const current_time = this.player.currentTime
-                    //     const total_buffered = buffered_end - buffered.start(0)
-                    //     const play_diff = buffered_end - current_time
+                    if ( this.player.buffered.length > 0 ) {
+                        const buffered = this.player.buffered
+                        const buffered_end = buffered.end(0)
+                        const current_time = this.player.currentTime
+                        // const total_buffered = buffered_end - buffered.start(0)
+                        const play_diff = buffered_end - current_time
 
-                    //     if ( play_diff > MAX_PLAY_DIFF ) {
+                        if ( play_diff > MAX_PLAY_DIFF ) {
+                            this.player.playbackRate = 1.0 + PLAY_SPEED_INC
                     //         if (  total_buffered > 0.1 ) {
                     //             const new_time = buffered_end - 0.1
                     //             console.log("Adjusting --- INITIAL --- time to", new_time.toFixed(3))
@@ -315,17 +334,31 @@ export default {
                     //         } else {
                     //             console.log("COULDN'T ADJUST --- INITIAL --- TIME BECAUSE BUFFER DIDN'T HAVE ENOUGHT")
                     //         }
-                    //     }
-                    // }
+                        }
+                    }
 
                 }
                 
             } else { // here later might implement other states checks, remove the stats off line
+
+                // console.log(this.playingSrc, "paused=", this.$refs.videoel.paused, stats)
+
+                // if ( this.$refs.videoel.paused ) {
+                //     console.log(this.playingSrc, "CHROME browser stopped the video, trying to play")
+                //     this.$refs.videoel.play()
+                //         .then(r => {
+                //             console.log(this.playingSrc, "UNPAUSED", r)
+                //         })
+                //         .catch((p1,p2,p3) => {
+                //             console.log(this.playingSrc, "unpause error", p1, p2 ,p3)
+                //         })
+                // }
+
                 if ( this.player.buffered.length > 0 ) {
                     const buffered = this.player.buffered
                     const buffered_end = buffered.end(0)
                     const current_time = this.player.currentTime
-                    const total_buffered = buffered_end - buffered.start(0)
+                    // const total_buffered = buffered_end - buffered.start(0)
                     const play_diff = buffered_end - current_time
 
                     // console.log(total_buffered.toFixed(3), current_time.toFixed(3), buffered_end.toFixed(3), play_diff.toFixed(3) )
@@ -333,24 +366,50 @@ export default {
                     if ( play_diff > MAX_PLAY_DIFF ) {
                         if ( ++this.overplayCounter >= MAX_PLAY_COUNTER ) {
                             this.overplayCounter = 0
+
+                            const current_rate = this.$refs.videoel.playbackRate
+                            if ( current_rate < PLAY_SPEED_MAX ) {
+                                const next_val  = Math.min(PLAY_SPEED_MAX, current_rate + PLAY_SPEED_INC)
+                                console.log(this.playingSrc, "Increasing speed due to play_diff", play_diff, "next speed", next_val)
+                                this.$refs.videoel.playbackRate = next_val
+                            } else {
+                                console.log(this.playingSrc, "Speed already at max, play_diff", play_diff)
+                            }
+
                             // `current_time + 0.4` is bad, sometimes time will be farther than that and will never get there
                             // `buffered_end` is also bad because it might never get a buffer to play
-                            if ( total_buffered > 0.5 ) {
-                                const new_time = buffered_end - 0.5
-                                console.log(`Adjusting time due to drift of ${this.playingSrc} from ${current_time} to`, new_time.toFixed(3))
-                                this.$nextTick(() => this.player.currentTime = new_time)
-                            } else {
-                                console.log("COULDN'T ADJUST TIME BECAUSE BUFFER DIDN'T HAVE ENOUGHT")
-                            }
+                            // if ( total_buffered > 0.5 ) {
+                            //     const new_time = buffered_end - 0.5
+                            //     console.log(`Adjusting time due to drift of ${this.playingSrc} from ${current_time} to`, new_time.toFixed(3))
+                            //     this.$nextTick(() => this.player.currentTime = new_time)
+                            // } else {
+                            //     console.log("COULDN'T ADJUST TIME BECAUSE BUFFER DIDN'T HAVE ENOUGHT")
+                            // }
+                        }
+                    } else if ( play_diff <= MIN_PLAY_DIFF ) {
+                        const current_rate = this.$refs.videoel.playbackRate
+                        if ( current_rate > 1.0 ) {
+                            console.log(this.playingSrc, "Setting speed to normal")
+                            this.$refs.videoel.playbackRate = PLAY_SPEED_NORMAL
                         }
                     } else {
                         this.overplayCounter = 0;
                     }
                 }
-
-                // console.log("Removing stats event (within the event itself) because we are not loading anymore");
-                // this.player.off(flvjs.Events.STATISTICS_INFO, this._onStatisticsInfo);
             }
+        },
+        _onVideoPlay() {
+            console.log(this.playingSrc, "ON-PLAY")
+            if ( this.autopaused === true ) {
+                this.autopaused = false
+                if ( this.playingSrc !== null && this.playingSrc.length > 0 )
+                    this.play(this.playingSrc)
+            }
+        },
+        _onVideoPaused() {
+            console.log(this.playingSrc, "ON-PAUSE")
+            this.autopaused = true
+            this.player.unload()
         }
     },
     watch: {
@@ -374,6 +433,8 @@ export default {
                 oncontextmenu="return false;"
                 @dblclick.stop="onVideoDoubleClick"
                 @loadedmetadata="onLoadedMetadata"
+                @play="_onVideoPlay"
+                @pause="_onVideoPaused"
                 muted
             ></video>
             <div class="cvideoplayer-panel" v-bind:class="panelClass">
