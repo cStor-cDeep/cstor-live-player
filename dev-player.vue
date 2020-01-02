@@ -33,7 +33,7 @@
     </div>    
 </template>
 <script>
-import Config from '@/Config'
+import Constants from '@/Constants'
 import VideoPlayer from './flvjsplayer.vue'
 import axios from 'axios'
 
@@ -49,7 +49,7 @@ export default {
             capturedWidth: 0,
             capturedHeight: 0,
             personRects: [],
-            videosrc: `${Config.wsflv}/live/cam_1_0`
+            videosrc: `${Constants.wsflv}/live/cam_1_0`
             // videosrc: "http://192.168.2.163:9111/live?port=1554&app=flvtest&stream=copy_3"
             // videosrc: "http://192.168.2.187:10080/video/171/cam_9_0"
             // videosrc: "rtmp://192.168.2.171:1554/live/cam_8_4"
