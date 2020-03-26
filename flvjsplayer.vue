@@ -76,7 +76,8 @@ export default {
     props: {
         src: String,
         aspectratio: { type: String, default: "" },
-        buffertime: { type: Number, default: 0.5 }
+        buffertime: { type: Number, default: 0.5 },
+        audio: { type: Boolean, default: false }
     },
     data() {
         return {
@@ -425,7 +426,10 @@ export default {
             }
         },
         _onVideoPlay() {
-            console.log(this.playingSrc, "ON-PLAY")
+            this.state = STATE_PLAYING
+            console.log(this.playingSrc, "began playing in on-play")
+            this.cancelErrorTimer()
+            this.cancelReconnectTimer()
             if ( this.autopaused === true ) {
                 this.autopaused = false
                 if ( this.playingSrc !== null && this.playingSrc.length > 0 )
@@ -461,7 +465,7 @@ export default {
                 @loadedmetadata="onLoadedMetadata"
                 @play="_onVideoPlay"
                 @pause="_onVideoPaused"
-                muted
+                :muted="!audio"
             ></video>
             <div class="cvideoplayer-panel" v-bind:class="panelClass">
                 <i v-if="state === 0" class="el-icon-loading"></i>
