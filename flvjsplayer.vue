@@ -1,5 +1,6 @@
 <script>
-import flvjs from "flv.js";
+import flvjs from "flv.js"
+import settings from "./settings"
 
 function toggleFullscreen(elem) {
     elem = elem || document.documentElement;
@@ -31,17 +32,6 @@ function toggleFullscreen(elem) {
     }
 }
 
-const DefaultPlayerConfig = {
-    check_step: 5,
-    speed_normal: 1.00,
-    speed_max: 1.12,
-    speed_step: 0.04,
-    min_diff: 0.6,
-    max_diff: 1.0,
-    play_timeout: 20000,
-    reconnect_delay: 5000
-}
-
 const STATE_INITIALIZING = 0
 const STATE_IDLE         = 1
 const STATE_LOADING      = 2
@@ -49,28 +39,6 @@ const STATE_PLAYING      = 3
 const STATE_ERROR        = 4
 const STATE_RECONNECTING = 5
 // const STATE_DESTROYED    = 6
-
-function store_settings_or_default(store) {
-    if ( typeof store !== "object" || store === null )
-        return DefaultPlayerConfig
-    
-    const ss = store.state
-    if ( typeof ss !== "object" || ss === null || ! ("videoplayer" in ss))
-        return DefaultPlayerConfig
-    
-    const settings = ss.videoplayer
-
-    let has_all = true
-    for ( let key in DefaultPlayerConfig)
-        has_all &= typeof DefaultPlayerConfig[key] === typeof settings[key]
-
-    // important: keep this way because in js (bool & bool) == number
-    if ( has_all )
-        return settings
-
-    console.log("WARNING: not using store settings because not all fields are there or type is different")
-    return DefaultPlayerConfig
-}
 
 export default {
     props: {
@@ -87,7 +55,6 @@ export default {
             state: STATE_INITIALIZING,
             displayMessage: "",
             overplayCounter: 0,
-            playerConfig: store_settings_or_default(this.$store)
         };
     },
     computed: {
@@ -142,7 +109,7 @@ export default {
         },
         startErrorTimer() {
             this.cancelErrorTimer();
-            const ms = this.playerConfig.play_timeout
+            const ms = settings.play_timeout
             console.log(this.playingSrc, "Starting error timer", ms);
             this.errorTimer = window.setTimeout(this.onErrorTimer, ms);
         },
@@ -168,7 +135,7 @@ export default {
         },
         startReconnectTimer() {
             this.cancelReconnectTimer()
-            const ms = this.playerConfig.reconnect_delay
+            const ms = settings.reconnect_delay
             console.log(this.playingSrc, "Starting reconnect timer", ms)
             this.state = STATE_RECONNECTING
             // this.displayMessage = "连接失败..."
@@ -352,8 +319,8 @@ export default {
                         // const total_buffered = buffered_end - buffered.start(0)
                         const play_diff = buffered_end - current_time
 
-                        if ( play_diff > this.playerConfig.max_diff ) {
-                            this.player.playbackRate = 1.0 + this.playerConfig.speed_step
+                        if ( play_diff > settings.max_diff ) {
+                            this.player.playbackRate = 1.0 + settings.speed_step
                     //         if (  total_buffered > 0.1 ) {
                     //             const new_time = buffered_end - 0.1
                     //             console.log("Adjusting --- INITIAL --- time to", new_time.toFixed(3))
@@ -390,13 +357,13 @@ export default {
 
                     // console.log(total_buffered.toFixed(3), current_time.toFixed(3), buffered_end.toFixed(3), play_diff.toFixed(3) )
 
-                    if ( play_diff > this.playerConfig.max_diff ) {
-                        if ( ++this.overplayCounter >= this.playerConfig.check_step ) {
+                    if ( play_diff > settings.max_diff ) {
+                        if ( ++this.overplayCounter >= settings.check_step ) {
                             this.overplayCounter = 0
 
                             const current_rate = this.$refs.videoel.playbackRate
-                            if ( current_rate < this.playerConfig.speed_max ) {
-                                const next_val  = Math.min(this.playerConfig.speed_max, current_rate + this.playerConfig.speed_step)
+                            if ( current_rate < settings.speed_max ) {
+                                const next_val  = Math.min(settings.speed_max, current_rate + settings.speed_step)
                                 console.log(this.playingSrc, "Increasing speed due to play_diff", play_diff, "next speed", next_val)
                                 this.$refs.videoel.playbackRate = next_val
                             } else {
@@ -413,11 +380,11 @@ export default {
                             //     console.log("COULDN'T ADJUST TIME BECAUSE BUFFER DIDN'T HAVE ENOUGHT")
                             // }
                         }
-                    } else if ( play_diff <= this.playerConfig.min_diff ) {
+                    } else if ( play_diff <= settings.min_diff ) {
                         const current_rate = this.$refs.videoel.playbackRate
                         if ( current_rate > 1.0 ) {
                             console.log(this.playingSrc, "Setting speed to normal")
-                            this.$refs.videoel.playbackRate = this.playerConfig.speed_normal
+                            this.$refs.videoel.playbackRate = settings.speed_normal
                         }
                     } else {
                         this.overplayCounter = 0;
