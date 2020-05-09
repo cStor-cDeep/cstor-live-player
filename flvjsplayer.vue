@@ -190,7 +190,7 @@ export default {
 
             this.player = flvjs.createPlayer(mediaDataSource, {
                 enableWorker: false,
-                enableStashBuffer: true,
+                enableStashBuffer: settings.buffered === true,
                 stashInitialSize: 64 * 1024, // 224
                 // stashInitialSize: 1024*1024*3,
                 // enableStashBuffer: false,
