@@ -7,5 +7,5 @@ export default {
     max_diff: 1.0,
     play_timeout: 20000,
     reconnect_delay: 5000,
-    buffered: true
+    buffered: false
 }
