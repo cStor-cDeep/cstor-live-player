@@ -43,8 +43,7 @@ const STATE_RECONNECTING = 5
 export default {
     props: {
         src: String,
-        aspectratio: { type: String, default: "" },
-        buffertime: { type: Number, default: 0.5 },
+        fill: { type: Boolean, default: false },
         audio: { type: Boolean, default: false }
     },
     data() {
@@ -425,7 +424,7 @@ export default {
         <div class="cvideoplayer-single">
             <video
                 class="videoel"
-                :class="{fill: aspectratio === 'fill'}"
+                :class="{fill}"
                 ref="videoel"
                 oncontextmenu="return false;"
                 @dblclick.stop="onVideoDoubleClick"
@@ -473,14 +472,14 @@ export default {
 .cvideoplayer-panel.idle {
     display: block;
     background-color: #1b1c20;
-    background-image: url(~@/cvideoplayer/images/stopped-bg.png);
+    background-image: url(./images/stopped-bg.png);
     background-position: center;
     background-repeat: no-repeat;
 }
 
 .cvideoplayer-panel.loading {
     display: block;
-    background: black url(~@/cvideoplayer/images/loading.gif) no-repeat center;
+    background: black url(./images/loading.gif) no-repeat center;
 }
 
 .cvideoplayer-panel.error {
