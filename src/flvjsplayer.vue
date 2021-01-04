@@ -420,10 +420,10 @@ export default {
 };
 </script>
 <template>
-    <div class="cvideoplayer-container">
-        <div class="cvideoplayer-single">
+    <div class="container">
+        <div class="videocontainer">
             <video
-                class="videoel"
+                class="video"
                 :class="{fill}"
                 ref="videoel"
                 oncontextmenu="return false;"
@@ -433,7 +433,7 @@ export default {
                 @pause="_onVideoPaused"
                 :muted="!audio"
             ></video>
-            <div class="cvideoplayer-panel" v-bind:class="panelClass">
+            <div class="panel" v-bind:class="panelClass">
                 <i v-if="state === 0" class="el-icon-loading"></i>
                 <div v-if="showingMessage" class="centered-message">{{displayMessage}}</div>
             </div>
@@ -441,12 +441,12 @@ export default {
     </div>
 </template>
 <style scoped>
-.cvideoplayer-container {
+.container {
     position: relative;
     height: 100%;
 }
 
-.cvideoplayer-single {
+.videocontainer {
     border-radius: inherit;
     position: absolute;
     display: flex;
@@ -458,7 +458,7 @@ export default {
     /*border: 5px solid red;*/
 }
 
-.cvideoplayer-panel {
+.panel {
     border-radius: inherit;
     box-sizing: border-box;
     width: 100%;
@@ -469,7 +469,7 @@ export default {
     display: none;
 }
 
-.cvideoplayer-panel.idle {
+.panel.idle {
     display: block;
     background-color: #1b1c20;
     background-image: url(./images/stopped-bg.png);
@@ -477,36 +477,36 @@ export default {
     background-repeat: no-repeat;
 }
 
-.cvideoplayer-panel.loading {
+.panel.loading {
     display: block;
     background: black url(./images/loading.gif) no-repeat center;
 }
 
-.cvideoplayer-panel.error {
+.panel.error {
     display: table;
     border: 5px solid yellow;
 }
 
-.cvideoplayer-panel.error > .centered-message {
+.panel.error > .centered-message {
     display: table-cell;
     vertical-align: middle;
     text-align: center;
 }
 
-.videoel {
+.video {
     border-radius: inherit;
     min-width: 100%;
     min-height: 100%;
 }
 
-.videoel.fill {
+.video.fill {
     object-fit: fill;
 }
 
 /* this fix chrome bug: if video controls are hidden, but we enter
-     * fullscreen mode programatically, it will show the video controls again!!
-     */
-.videoel::-webkit-media-controls-enclosure {
+ * fullscreen mode programatically, it will show the video controls again!!
+ */
+.video::-webkit-media-controls-enclosure {
     display: none !important;
 }
 </style>
