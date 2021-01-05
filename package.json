@@ -1,6 +1,6 @@
 {
   "name": "cstor-live-player",
-  "version": "0.9.1-dev",
+  "version": "0.9.1",
   "private": false,
   "license": "MIT",
   "scripts": {
