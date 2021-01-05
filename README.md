@@ -1,4 +1,4 @@
-# cvideoplayer
+# cstor-live-player
 
 ## Project setup
 ```
