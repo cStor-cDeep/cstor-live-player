@@ -1,6 +1,6 @@
 {
   "name": "cstor-live-player",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "private": false,
   "license": "MIT",
   "description": "Low delay player for live video using flv.js",
@@ -26,7 +26,9 @@
   "main": "dist/cstor-live-player.common.js",
   "unpkg": "dist/cstor-live-player.umd.min.js",
   "style": "dist/cstor-live-player.css",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "dependencies": {
     "flv.js": "^1.5.0"
   },
