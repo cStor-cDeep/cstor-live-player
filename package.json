@@ -3,18 +3,30 @@
   "version": "0.9.1",
   "private": false,
   "license": "MIT",
+  "description": "Low delay player for live video using flv.js",
+  "author": "adong@cstor.cn",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cStor-cDeep/cstor-live-player.git"
+  },
+  "homepage": "https://github.com/cStor-cDeep/cstor-live-player",
+  "bugs": {
+    "url": "https://github.com/cStor-cDeep/cstor-live-player/issues"
+  },
+  "keywords": [
+    "low delay",
+    "live-player",
+    "flv"
+  ],
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build --target lib index.js",
     "lint": "vue-cli-service lint"
   },
   "main": "dist/cstor-live-player.common.js",
+  "unpkg": "dist/cstor-live-player.umd.min.js",
   "style": "dist/cstor-live-player.css",
-  "files": [
-    "dist",
-    "src",
-    "index.js"
-  ],
+  "files": ["dist"],
   "dependencies": {
     "flv.js": "^1.5.0"
   },
