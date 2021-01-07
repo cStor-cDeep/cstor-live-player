@@ -17,7 +17,7 @@ try to smoothly increase the playing speed.
 ## Using
 
 The component doesn't autoregister as a Vue component, you must import the
-stylesheet and provide a size for the component.
+stylesheet and provide a size for the component..
 
 Absoulte minimal `App.vue`:
 
