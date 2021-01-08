@@ -1,3 +1,5 @@
+English | [简体中文](README-cn.md)
+
 # cstor-live-player
 
 Vue component for low delay video playing using flv.js.
