@@ -26,7 +26,7 @@ Absoulte minimal `App.vue`:
 ```html
 <template>
     <div id="app">
-        <cstor-video-player style="height: 720px;" src="http://host:port/path/to/stream"/>
+        <cstor-live-player style="height: 720px;" src="http://host:port/path/to/stream"/>
     </div>
 </template>
 <script>

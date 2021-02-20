@@ -23,7 +23,7 @@ cstor-live-player会一直重连直到可以播放视频为止。cstor-live-play
 ```html
 <template>
     <div id="app">
-        <cstor-video-player style="height: 720px;" src="http://host:port/path/to/stream"/>
+        <cstor-live-player style="height: 720px;" src="http://host:port/path/to/stream"/>
     </div>
 </template>
 <script>
