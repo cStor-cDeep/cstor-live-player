@@ -315,18 +315,10 @@ export default {
                         const buffered = this.player.buffered
                         const buffered_end = buffered.end(0)
                         const current_time = this.player.currentTime
-                        // const total_buffered = buffered_end - buffered.start(0)
                         const play_diff = buffered_end - current_time
 
                         if ( play_diff > settings.max_diff ) {
                             this.player.playbackRate = 1.0 + settings.speed_step
-                    //         if (  total_buffered > 0.1 ) {
-                    //             const new_time = buffered_end - 0.1
-                    //             console.log("Adjusting --- INITIAL --- time to", new_time.toFixed(3))
-                    //             this.$nextTick(() => this.player.currentTime = new_time)
-                    //         } else {
-                    //             console.log("COULDN'T ADJUST --- INITIAL --- TIME BECAUSE BUFFER DIDN'T HAVE ENOUGHT")
-                    //         }
                         }
                     }
 
@@ -351,33 +343,31 @@ export default {
                     const buffered = this.player.buffered
                     const buffered_end = buffered.end(0)
                     const current_time = this.player.currentTime
-                    // const total_buffered = buffered_end - buffered.start(0)
+                    const total_buffered = buffered_end - buffered.start(0)
                     const play_diff = buffered_end - current_time
 
-                    // console.log(total_buffered.toFixed(3), current_time.toFixed(3), buffered_end.toFixed(3), play_diff.toFixed(3) )
+                    console.log(total_buffered.toFixed(3), current_time.toFixed(3), buffered_end.toFixed(3), play_diff.toFixed(3) )
 
                     if ( play_diff > settings.max_diff ) {
                         if ( ++this.overplayCounter >= settings.check_step ) {
                             this.overplayCounter = 0
 
-                            const current_rate = this.$refs.videoel.playbackRate
-                            if ( current_rate < settings.speed_max ) {
-                                const next_val  = Math.min(settings.speed_max, current_rate + settings.speed_step)
-                                console.log(this.playingSrc, "Increasing speed due to play_diff", play_diff, "next speed", next_val)
-                                this.$refs.videoel.playbackRate = next_val
+                            if ( total_buffered > 10 ) {
+                                const new_time = buffered_end - 0.5
+                                console.log(`Adjusting time due to drift of ${this.playingSrc} from ${current_time} to`, new_time.toFixed(3))
+                                this.$refs.videoel.playbackRate = settings.speed_normal
+                                this.$nextTick(() => this.player.currentTime = new_time)
                             } else {
-                                console.log(this.playingSrc, "Speed already at max, play_diff", play_diff)
+                                const current_rate = this.$refs.videoel.playbackRate
+                                if ( current_rate < settings.speed_max ) {
+                                    const next_val  = Math.min(settings.speed_max, current_rate + settings.speed_step)
+                                    console.log(this.playingSrc, "Increasing speed due to play_diff", play_diff, "next speed", next_val)
+                                    this.$refs.videoel.playbackRate = next_val
+                                } else {
+                                    console.log(this.playingSrc, "Speed already at max, play_diff", play_diff)
+                                }
                             }
 
-                            // `current_time + 0.4` is bad, sometimes time will be farther than that and will never get there
-                            // `buffered_end` is also bad because it might never get a buffer to play
-                            // if ( total_buffered > 0.5 ) {
-                            //     const new_time = buffered_end - 0.5
-                            //     console.log(`Adjusting time due to drift of ${this.playingSrc} from ${current_time} to`, new_time.toFixed(3))
-                            //     this.$nextTick(() => this.player.currentTime = new_time)
-                            // } else {
-                            //     console.log("COULDN'T ADJUST TIME BECAUSE BUFFER DIDN'T HAVE ENOUGHT")
-                            // }
                         }
                     } else if ( play_diff <= settings.min_diff ) {
                         const current_rate = this.$refs.videoel.playbackRate
