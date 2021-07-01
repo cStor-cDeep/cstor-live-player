@@ -1,5 +1,5 @@
 <script>
-import flvjs from "flv.js"
+import mpegts from "mpegts.js"
 import settings from "./settings"
 
 function toggleFullscreen(elem) {
@@ -187,7 +187,7 @@ export default {
                 cors: true
             };
 
-            this.player = flvjs.createPlayer(mediaDataSource, {
+            this.player = mpegts.createPlayer(mediaDataSource, {
                 enableWorker: false,
                 enableStashBuffer: settings.buffered === true,
                 stashInitialSize: 64 * 1024, // 224
@@ -208,30 +208,30 @@ export default {
             this.player.attachMediaElement(this.$refs.videoel);
 
             // "NetworkError", "HttpStatusCodeInvalid", {code: 500, msg:"Internal Server Error"}
-            this.player.on(flvjs.Events.ERROR, (event_type,error_type,error_object) => {
+            this.player.on(mpegts.Events.ERROR, (event_type,error_type,error_object) => {
                 console.log(this.playingSrc, "ERROR", event_type, error_type, error_object);
                 this.startReconnectTimer();
             });
 
             // this happens when video stops, for example stopping the ai task
             // maybe this event appears because of nginx configuration about notify_xx ??
-            this.player.on(flvjs.Events.LOADING_COMPLETE, (evt) => {
+            this.player.on(mpegts.Events.LOADING_COMPLETE, (evt) => {
                 console.log(this.playingSrc, "LOADING_COMPLETE", evt);
                 this.startReconnectTimer();
             });
 
             // none of these 4 events seems to happen, I think we should get the
             // events from the video tag.
-            this.player.on(flvjs.Events.RECOVERED_EARLY_EOF, function() {
+            this.player.on(mpegts.Events.RECOVERED_EARLY_EOF, function() {
                 console.log(this.playingSrc, "RECOVERED_EARLY_EOF", arguments);
             });
-            this.player.on(flvjs.Events.MEDIA_INFO, function() {
+            this.player.on(mpegts.Events.MEDIA_INFO, function() {
                 console.log(this.playingSrc, "MEDIA_INFO", arguments);
             });
-            this.player.on(flvjs.Events.METADATA_ARRIVED, function() {
+            this.player.on(mpegts.Events.METADATA_ARRIVED, function() {
                 console.log(this.playingSrc, "METADATA_ARRIVED", arguments);
             });
-            this.player.on(flvjs.Events.SCRIPTDATA_ARRIVED, function() {
+            this.player.on(mpegts.Events.SCRIPTDATA_ARRIVED, function() {
                 console.log(this.playingSrc, "SCRIPTDATA_ARRIVED", arguments);
             });
 
@@ -249,8 +249,8 @@ export default {
                 url: "http://192.168.2.187:28081/video/live/cam_1_4"
             */
             // can use this event to detect video didn't start or no more frames
-            // this.player.on(flvjs.Events.STATISTICS_INFO, function(stats) {console.log("STATISTICS_INFO", stats);});
-            this.player.on(flvjs.Events.STATISTICS_INFO, this._onStatisticsInfo);
+            // this.player.on(mpegts.Events.STATISTICS_INFO, function(stats) {console.log("STATISTICS_INFO", stats);});
+            this.player.on(mpegts.Events.STATISTICS_INFO, this._onStatisticsInfo);
 
             // const videoel = this.$refs.videoel
             // videoel.addEventListener('play', ev => {
