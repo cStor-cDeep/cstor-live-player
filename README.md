@@ -2,7 +2,7 @@ English | [简体中文](README-cn.md)
 
 # cstor-live-player
 
-Vue component for low delay video playing using flv.js.
+Vue component for low delay video playing using mpegts.js.
 
 Can play http-flv or websocket streams enconded in h264.
 
@@ -82,4 +82,3 @@ video.
 - (maybe) Add a slot for personalization.
 - (maybe) Do something about logging: add configuration or disable it.
 - Some messages are only in Chinese.
-- Add Chinese documentation.

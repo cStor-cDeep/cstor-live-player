@@ -2,7 +2,7 @@
 
 # cstor-live-player
 
-cstor-live-player是一个基于Vue的组件，目的是使用flv.js播放低延迟的实时视频流。
+cstor-live-player是一个基于Vue的组件，目的是使用mpegts.js播放低延迟的实时视频流。
 
 可以播放h264中包含的http-flv或websocket流。
 
